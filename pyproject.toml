@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "bitacora_printer"
+version = "0.0.1"
+description = "Script that generates daily and monk mode bitacoras."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Angelo Mosquera", email = "anggelomos@outlook.com" },
+]
+maintainers = [
+    { name = "Angelo Mosquera", email = "anggelomos@outlook.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "pillow",
+    "python-dateutil",
+    "tickthon",
+    "python-weather"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "twine",
+    "flake8",
+    "mypy",
+    "types-requests"
+]
+
+[project.urls]
+repository = "https://github.com/anggelomos/bitacora-printer"
