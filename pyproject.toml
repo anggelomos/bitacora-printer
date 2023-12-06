@@ -1,36 +1,32 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "bitacora_printer"
 version = "0.0.1"
 description = "Script that generates daily and monk mode bitacoras."
+authors = ["Angelo Mosquera <anggelomos@outlook.com>"]
+maintainers = ["Angelo Mosquera <anggelomos@outlook.com>"]
 readme = "README.md"
-requires-python = ">=3.10"
-authors = [
-    { name = "Angelo Mosquera", email = "anggelomos@outlook.com" },
-]
-maintainers = [
-    { name = "Angelo Mosquera", email = "anggelomos@outlook.com" },
-]
+homepage = "https://github.com/anggelomos/bitacora-printer"
 classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
-dependencies = [
-    "pillow",
-    "python-dateutil",
-    "tickthon",
-    "python-weather"
-]
 
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "twine",
-    "flake8",
-    "mypy",
-    "types-requests"
-]
+[tool.poetry.dependencies]
+python = "^3.10"
+pillow = "*"
+python-dateutil = "*"
+tickthon = "*"
+python-weather = "*"
 
-[project.urls]
+[tool.poetry.dev-dependencies]
+pytest = "*"
+twine = "*"
+flake8 = "*"
+mypy = "*"
+types-requests = "*"
+
+[tool.poetry.urls]
 repository = "https://github.com/anggelomos/bitacora-printer"
