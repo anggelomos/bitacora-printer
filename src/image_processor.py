@@ -23,7 +23,7 @@ def add_date_to_img(base_image: ImageDraw, date: datetime) -> ImageDraw:
     logging.info(f"Adding date {date} to image")
     day = date.strftime("%A").capitalize()[0:3]
     day_number = date.timetuple().tm_yday
-    formatted_date = date.strftime("%d-%b")[:-1]
+    formatted_date = date.strftime("%d-%b")
 
     base_image.text((350, 70), day, font=ImageFont.truetype(font_path, size=200), fill="black")
     base_image.text((363, 300), f"Day {day_number}", font=ImageFont.truetype(font_path, size=80), fill="black")
