@@ -94,8 +94,9 @@ class TaskProcessor:
         logging.info(f"Getting active tasks for date {date}")
 
         active_tasks = self.ticktick_client.get_active_tasks()
-        day_tasks = [task for task in active_tasks if task.due_date == date]
+        day_tasks = [task for task in active_tasks if task.due_date.startswith(date)]
         filtered_tasks = [task for task in day_tasks if all(tag not in task.tags for tag in ["routine", "habit"])]
-        task_titles = self._process_task_titles(filtered_tasks)
+        sorted_tasks = sorted(filtered_tasks, key=lambda task: task.due_date)
+        task_titles = self._process_task_titles(sorted_tasks)
 
         return task_titles
