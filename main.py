@@ -1,33 +1,34 @@
-#!C:\Users\angel\OneDrive\Documentos\projects\daily_card\env-daily-card\Scripts\python.exe
-import locale
-import logging
 import os
-import sys
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from PIL import Image, ImageDraw
+from src.page_processor import generate_tasks_page, save_pages_as_pdf, generate_logs_page, generate_thoughts_page, \
+    save_pages_as_png, generate_front_page_merged
 
-from src.image_processor import add_date_to_img, add_tasks_to_img, add_weather_to_img
-from src.task_processor import TaskProcessor
-
-delta_days = 0
-
-logging.info(f"Generating daily card for {delta_days} days ago")
-task_processor = TaskProcessor(os.getenv("TT_USER"), os.getenv("TT_PASS"))
-daily_card_base = Image.open("designs/bitacora_diaria_base.png")
-daily_card = ImageDraw.Draw(daily_card_base)
+tasks_delta_days = 0
+logs_delta_days = -1
+old_pages_folder = "old_pages/"
 
 quebec_timezone = ZoneInfo("America/Toronto")
-card_date = datetime.now(quebec_timezone) + timedelta(days=delta_days)
-daily_card_with_date = add_date_to_img(daily_card, card_date)
-daily_card_with_weather = add_weather_to_img(daily_card_with_date, card_date)
+current_date = datetime.now(quebec_timezone)
+tasks_date = current_date + timedelta(days=tasks_delta_days)
+logs_date = current_date + timedelta(days=logs_delta_days)
 
-task_titles = task_processor.get_day_active_task_titles(
-    card_date.strftime("%Y-%m-%d"))
-daily_card_with_tasks = add_tasks_to_img(daily_card_with_weather, task_titles)
+tasks_page = generate_tasks_page(tasks_date)
+logs_page = generate_logs_page(logs_date)
+thoughts_page = generate_thoughts_page()
 
-logging.info("Saving bitacora diaria")
-daily_card_filename = f"bitacora-diaria-{card_date.strftime('%d-%b-%Y').lower()}.pdf"
-daily_card_base.save(daily_card_filename, "PDF", resolution=700)
-# os.startfile(daily_card_filename)
+bitacora_front_page_merged = generate_front_page_merged(logs_page, logs_date, old_pages_folder)
+
+save_pages_as_pdf(f"bitacora-print-{current_date.strftime('%d-%b-%Y').lower()}",
+                  [logs_page, thoughts_page, tasks_page],
+                  open_after_save=True)
+
+save_pages_as_pdf(f"bitacora-save-{current_date.strftime('%d-%b-%Y').lower()}",
+                  bitacora_front_page_merged,
+                  open_after_save=True)
+
+if not os.path.exists(old_pages_folder):
+    os.makedirs(old_pages_folder)
+save_pages_as_png(f"{old_pages_folder}old-task-page-{current_date.strftime('%d-%b-%Y').lower()}", tasks_page)
+save_pages_as_png(f"{old_pages_folder}old-thoughts-page-{current_date.strftime('%d-%b-%Y').lower()}", thoughts_page)

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "bitacora_printer"
-version = "0.0.1"
+version = "2.0.0"
 description = "Script that generates daily and monk mode bitacoras."
 authors = ["Angelo Mosquera <anggelomos@outlook.com>"]
 maintainers = ["Angelo Mosquera <anggelomos@outlook.com>"]
@@ -21,10 +21,11 @@ python-dateutil = "*"
 tickthon = "*"
 python-weather = "*"
 auto-mix-prep = "^0.2.0"
+qrcode = "^7.4.2"
+nothion = "^0.2.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
-twine = "*"
 flake8 = "*"
 mypy = "*"
 types-requests = "*"
