@@ -56,7 +56,7 @@ class DataProcessor:
             if len(task_title) >= max_char_length:
                 task_title = task_title[:max_char_length].strip() + "..."
 
-            processed_task_titles.append(f"{task_type}{important_task}{task_title}")
+            processed_task_titles.append(f"{important_task}{task_type}{task_title}")
 
         return processed_task_titles
 
