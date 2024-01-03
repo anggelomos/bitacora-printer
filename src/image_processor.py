@@ -7,6 +7,7 @@ import python_weather
 from PIL import Image, ImageFont
 from PIL.ImageDraw import ImageDraw as ImageDrawType
 from PIL.Image import Image as ImageType
+from aiohttp import ClientConnectorError
 from nothion import PersonalStats
 from python_weather import Kind
 import qrcode
@@ -62,7 +63,7 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: List[str]) -> ImageDrawTy
     return base_image
 
 
-def get_weather_forecast():
+async def get_weather_forecast(timeout: int):
     """Get weather forecast for Quebec City.
 
     Returns:
@@ -76,7 +77,7 @@ def get_weather_forecast():
             weather = await client.get("Quebec City")
         return weather.forecasts
 
-    return asyncio.run(getweather())
+    return await asyncio.wait_for(getweather(), timeout=timeout)
 
 
 def get_weather_icon(forecast_kind: Kind, forecast_time: int) -> ImageType:
@@ -102,7 +103,12 @@ def get_weather_icon(forecast_kind: Kind, forecast_time: int) -> ImageType:
 
 
 def add_weather_to_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
-    date_forecast = next((fc for fc in get_weather_forecast() if fc.date == date.date()), None)
+    try:
+        date_forecast = next((fc for fc in asyncio.run(get_weather_forecast(timeout=30)) if fc.date == date.date()),
+                             None)
+    except (ClientConnectorError, asyncio.TimeoutError):
+        logging.warning("Could not connect to weather API")
+        date_forecast = None
 
     if date_forecast is None:
         return base_image
