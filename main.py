@@ -22,11 +22,11 @@ bitacora_front_page_merged = generate_front_page_merged(logs_page, logs_date, ol
 
 save_pages_as_pdf(f"bitacora-print-{current_date.strftime('%d-%b-%Y').lower()}",
                   [logs_page, thoughts_page, tasks_page],
-                  open_after_save=True)
+                  open_after_save=False)
 
 save_pages_as_pdf(f"bitacora-save-{current_date.strftime('%d-%b-%Y').lower()}",
                   bitacora_front_page_merged,
-                  open_after_save=True)
+                  open_after_save=False)
 
 if not os.path.exists(old_pages_folder):
     os.makedirs(old_pages_folder)
