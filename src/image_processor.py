@@ -193,6 +193,7 @@ def add_journal_qr_to_img(base_image: ImageType, journal_url: str) -> ImageType:
 
 def add_thoughts_to_img(base_image: ImageDrawType, thoughts: str) -> ImageDrawType:
     logging.info("Adding thoughts to image")
+    thoughts = "\n".join(thoughts.split("\n")[:41])
     base_image.text((135, 120), thoughts, font=ImageFont.truetype(font_path, size=68), spacing=13, fill="black")
 
     return base_image
