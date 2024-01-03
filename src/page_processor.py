@@ -130,8 +130,8 @@ def generate_front_page_merged(logs_page: ImageType, logs_date: datetime, files_
     logging.info(f"Generating front page for {logs_date}")
 
     if os.path.exists(files_folder):
-        old_task_page = Image.open(f"old-task-page-{logs_date.strftime('%d-%b-%Y').lower()}.png")
-        old_thoughts_page = Image.open(f"old-thoughts-page-{logs_date.strftime('%d-%b-%Y').lower()}.png")
+        old_task_page = Image.open(f"{files_folder}{logs_date.strftime('%d-%b-%Y').lower()}-old-task-page.png")
+        old_thoughts_page = Image.open(f"{files_folder}{logs_date.strftime('%d-%b-%Y').lower()}-old-thoughts-page.png")
         old_task_page.paste(logs_page, (0, 0), mask=ImageOps.invert(logs_page.copy().convert('L')))
 
         return [old_task_page, old_thoughts_page]

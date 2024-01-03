@@ -7,7 +7,7 @@ import python_weather
 from PIL import Image, ImageFont
 from PIL.ImageDraw import ImageDraw as ImageDrawType
 from PIL.Image import Image as ImageType
-from aiohttp import ClientConnectorError
+from aiohttp import ClientConnectorError, ServerDisconnectedError
 from nothion import PersonalStats
 from python_weather import Kind
 import qrcode
@@ -104,9 +104,9 @@ def get_weather_icon(forecast_kind: Kind, forecast_time: int) -> ImageType:
 
 def add_weather_to_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
     try:
-        date_forecast = next((fc for fc in asyncio.run(get_weather_forecast(timeout=30)) if fc.date == date.date()),
+        date_forecast = next((fc for fc in asyncio.run(get_weather_forecast(timeout=10)) if fc.date == date.date()),
                              None)
-    except (ClientConnectorError, asyncio.TimeoutError):
+    except (ClientConnectorError, asyncio.TimeoutError, ServerDisconnectedError):
         logging.warning("Could not connect to weather API")
         date_forecast = None
 

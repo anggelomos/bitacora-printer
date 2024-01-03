@@ -30,5 +30,5 @@ save_pages_as_pdf(f"bitacora-save-{current_date.strftime('%d-%b-%Y').lower()}",
 
 if not os.path.exists(old_pages_folder):
     os.makedirs(old_pages_folder)
-save_pages_as_png(f"{old_pages_folder}old-task-page-{current_date.strftime('%d-%b-%Y').lower()}", tasks_page)
-save_pages_as_png(f"{old_pages_folder}old-thoughts-page-{current_date.strftime('%d-%b-%Y').lower()}", thoughts_page)
+save_pages_as_png(f"{old_pages_folder}{current_date.strftime('%d-%b-%Y').lower()}-old-task-page", tasks_page)
+save_pages_as_png(f"{old_pages_folder}{current_date.strftime('%d-%b-%Y').lower()}-old-thoughts-page", thoughts_page)
