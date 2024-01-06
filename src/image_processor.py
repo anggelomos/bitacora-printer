@@ -186,7 +186,7 @@ def _generate_qr_code(url: str, size_in_cm: float, dpi: int) -> ImageType:
 
 def add_journal_qr_to_img(base_image: ImageType, journal_url: str) -> ImageType:
     qr_code_img = _generate_qr_code(journal_url, 1, 700)
-    base_image.paste(qr_code_img, (1570, 140))
+    base_image.paste(qr_code_img, (1500, 140))
 
     return base_image
 
