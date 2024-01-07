@@ -73,6 +73,7 @@ def generate_thoughts_page() -> ImageType:
     with open("thoughts.txt") as f:
         raw_thoughts = f.read()
 
+    raw_thoughts = raw_thoughts.replace("#", "").replace("*", "")
     thoughts = "\n".join([textwrap.fill(line, width=58) for line in raw_thoughts.split("\n")])
     add_thoughts_to_img(raw_thoughts_page, thoughts)
 
