@@ -93,7 +93,7 @@ class DataProcessor:
 
             max_char_length = 62
             if len(log_title) >= max_char_length:
-                log_title = log_title[:max_char_length].strip() + "..."
+                log_title = log_title[:max_char_length] + "..."
 
             processed_logs.append(log_title)
 
