@@ -16,7 +16,7 @@ font_path = "fonts/RobotoMono-Regular.ttf"
 bold_font_path = "fonts/RobotoMono-Bold.ttf"
 
 
-def add_date_to_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
+def add_date_to_tasks_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
     """Add date to base image.
 
     Args:
@@ -26,18 +26,25 @@ def add_date_to_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
     Returns:
         Base image with date added.
     """
-    logging.info(f"Adding date {date} to image")
+    logging.info(f"Adding date {date} to tasks image")
     day = date.strftime("%A").capitalize()[0:3]
     day_number = date.timetuple().tm_yday
     formatted_date = date.strftime("%d-%b")
 
-    base_image.text((310, 70), day, font=ImageFont.truetype(font_path, size=195), fill="black")
-    base_image.text((340, 270), f"Day {day_number}", font=ImageFont.truetype(font_path, size=68), fill="black")
-    base_image.text((340, 340), formatted_date, font=ImageFont.truetype(font_path, size=68), fill="black")
+    base_image.text((286, 70), day, font=ImageFont.truetype(font_path, size=195), fill="black")
+    base_image.text((300, 270), f"Day {day_number}", font=ImageFont.truetype(font_path, size=68), fill="black")
+    base_image.text((300, 340), formatted_date, font=ImageFont.truetype(font_path, size=68), fill="black")
     return base_image
 
 
-def add_tasks_to_img(base_image: ImageDrawType, tasks: List[str]) -> ImageDrawType:
+def _is_main_task(task_title: str) -> bool:
+    return task_title.startswith("!")
+
+
+def _does_task_have_specific_time(task_date: str) -> bool:
+    return task_date != "12:00am"
+
+def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) -> ImageDrawType:
     """Add tasks to base image.
 
     Args:
@@ -48,17 +55,47 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: List[str]) -> ImageDrawTy
         Base image with tasks added.
     """
     logging.info("Adding tasks to image")
-    current_height = 488
-    task_padding = 115
+    main_task_height = 495
+    current_height = 816
+    task_height_padding = 118.5
+    base_left_width = 300
+    task_date_left_width = base_left_width + 288
 
-    for task in tasks:
-        task_font_path = font_path
-        if task.startswith("!"):
-            task_font_path = bold_font_path
+    base_date_font_size = 58
+    date_font = ImageFont.truetype(font_path, size=base_date_font_size)
+    date_bold_font = ImageFont.truetype(bold_font_path, size=base_date_font_size)
 
-        task_font = ImageFont.truetype(task_font_path, size=78)
-        base_image.text((415, current_height), task, font=task_font, fill="black")
-        current_height += task_padding
+    base_task_font_size = 68
+    task_font = ImageFont.truetype(font_path, size=base_task_font_size)
+    task_bold_font = ImageFont.truetype(bold_font_path, size=base_task_font_size)
+
+    for task_title, task_date in tasks:
+        current_task_font = task_font
+        current_date_font = date_font
+
+        if _is_main_task(task_title):
+            current_task_font = task_bold_font
+            current_date_font = date_bold_font
+
+            # Print main task at the top of the page
+            main_task_title = task_title.replace("!", "* ")
+            base_image.text((base_left_width, main_task_height), main_task_title, font=current_task_font,
+                            fill="black")
+
+            main_task_height += task_height_padding
+
+        if _does_task_have_specific_time(task_date):
+            max_char_len = 48
+            task_title = task_title[:max_char_len].strip() + "..." if len(task_title) >= max_char_len else task_title
+
+            left_width = task_date_left_width
+            base_image.text((base_left_width, current_height), task_date, font=current_date_font, fill="black")
+        else:
+            left_width = base_left_width
+            task_title = f"Ξ {task_title}"
+
+        base_image.text((left_width, current_height), task_title, font=current_task_font, fill="black")
+        current_height += task_height_padding
 
     return base_image
 
@@ -151,6 +188,22 @@ def add_logs_to_img(base_image: ImageDrawType, logs: List[str]) -> ImageDrawType
         base_image.text((350, current_height), log, font=task_font, fill="black")
         current_height += task_padding
 
+    return base_image
+
+
+def add_date_to_logs_img(base_image: ImageDrawType, date: datetime) -> ImageDrawType:
+    """Add date to base image.
+
+    Args:
+        base_image: Base image to draw on.
+        date: Date to add to base image in format dd-mmm.
+
+    Returns:
+        Base image with date added.
+    """
+    logging.info(f"Adding date {date} to logs image")
+    formatted_date = date.strftime("%d-%b-%Y")
+    base_image.text((2320, 120), formatted_date, font=ImageFont.truetype(font_path, size=58), fill="black")
     return base_image
 
 

@@ -15,7 +15,7 @@ class DataProcessor:
         self.ticktick_client = TicktickClient(os.getenv("TT_USER"), os.getenv("TT_PASS"))
         self.notion_client = NotionClient(os.getenv("NT_AUTH"))
 
-    def _process_task_titles(self, tasks: List[Task]) -> List[str]:
+    def _process_task_title(self, task: Task) -> str:
         """Extract and process task titles.
 
         The task titles will be processed in the following way:
@@ -25,59 +25,56 @@ class DataProcessor:
         -: Personal task
         ~: Project task
 
-        * Important tasks will have an exclamation mark after the type character, for example ^!.
+        * Important tasks will have an exclamation mark before the type character, for example ^!.
 
-        * The task titles will have a maximum length of 33 characters, if the title is longer it will be truncated with
+        * The task titles will have a maximum length, if the title is longer it will be truncated with
         an ellipsis.
 
         Args:
-            tasks: List of tasks to process.
+            task: Task to process.
 
         Returns:
-            List of processed tasks titles ordered chronologically.
+            Processed tasks title.
         """
-        max_amount_tasks = 11
-        tasks = tasks[:max_amount_tasks]
+        task_type = ""
+        if "work" in task.tags:
+            task_type = "^"
 
-        processed_task_titles = []
-        for task in tasks:
-            task_type = ""
-            if not task.tags:
-                task_type = ""
-            elif "work" in task.tags:
-                task_type = "^"
+        important_task = ""
+        if "main-task" in task.tags:
+            important_task = "!"
 
-            important_task = ""
-            if "main-task" in task.tags:
-                important_task = "!"
+        task_title = task.title.strip()
+        max_char_length = 52
+        if len(task_title) >= max_char_length:
+            task_title = task_title[:max_char_length].strip() + "..."
 
-            task_title = task.title.strip()
-            max_char_length = 46
-            if len(task_title) >= max_char_length:
-                task_title = task_title[:max_char_length].strip() + "..."
+        return f"{important_task}{task_type}{task_title}"
 
-            processed_task_titles.append(f"{important_task}{task_type}{task_title}")
-
-        return processed_task_titles
-
-    def get_day_active_task_titles(self, date: str) -> List[str]:
+    def get_day_active_task_titles(self, date: str) -> list[tuple[str, str]]:
         """Get active tasks for a given date.
 
         Args:
             date: Date for which to get tasks in the format YYYY-MMM-DD.
 
         Returns:
-            List of processed tasks titles for given date ordered chronologically.
+            List of processed tasks titles for given date ordered chronologically with the following format:
+            (task_title, task_date)
         """
         logging.info(f"Getting active tasks for date {date}")
 
         active_tasks = self.ticktick_client.get_active_tasks()
         day_tasks = [task for task in active_tasks if task.due_date.startswith(date)]
-        filtered_tasks = [task for task in day_tasks if all(tag not in task.tags for tag in ["routine", "habit"])]
-        sorted_tasks = sorted(filtered_tasks, key=lambda task: task.due_date)
-        task_titles = self._process_task_titles(sorted_tasks)
+        sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
 
-        return task_titles
+        max_amount_tasks = 23
+        raw_tasks = sorted_tasks[:max_amount_tasks]
+
+        processed_task_titles = [(self._process_task_title(task),
+                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower())
+                                 for task in raw_tasks]
+
+        return processed_task_titles
 
     def _process_log_titles(self, logs: List[Task]) -> List[str]:
         max_amount_logs = 20
