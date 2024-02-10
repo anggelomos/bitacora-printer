@@ -31,9 +31,9 @@ def add_date_to_tasks_img(base_image: ImageDrawType, date: datetime) -> ImageDra
     day_number = date.timetuple().tm_yday
     formatted_date = date.strftime("%d-%b")
 
-    base_image.text((286, 70), day, font=ImageFont.truetype(font_path, size=195), fill="black")
-    base_image.text((300, 270), f"Day {day_number}", font=ImageFont.truetype(font_path, size=68), fill="black")
-    base_image.text((300, 340), formatted_date, font=ImageFont.truetype(font_path, size=68), fill="black")
+    base_image.text((368, 70), day, font=ImageFont.truetype(font_path, size=195), fill="black")
+    base_image.text((395, 270), f"Day {day_number}", font=ImageFont.truetype(font_path, size=68), fill="black")
+    base_image.text((395, 340), formatted_date, font=ImageFont.truetype(font_path, size=68), fill="black")
     return base_image
 
 
@@ -43,6 +43,7 @@ def _is_main_task(task_title: str) -> bool:
 
 def _does_task_have_specific_time(task_date: str) -> bool:
     return task_date != "12:00am"
+
 
 def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) -> ImageDrawType:
     """Add tasks to base image.
@@ -58,7 +59,7 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) ->
     main_task_height = 495
     current_height = 816
     task_height_padding = 118.5
-    base_left_width = 300
+    base_left_width = 355
     task_date_left_width = base_left_width + 288
 
     base_date_font_size = 58
