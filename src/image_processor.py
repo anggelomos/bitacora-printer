@@ -209,10 +209,10 @@ def add_date_to_logs_img(base_image: ImageDrawType, date: datetime) -> ImageDraw
 
 
 def add_stats_to_img(base_image: ImageDrawType, stats: PersonalStats) -> ImageDrawType:
-    print_stats: list[tuple[float, tuple[int, int]]] = [(stats.work_time, (715, 140)),
-                                                        (stats.focus_time, (985, 140)),
-                                                        (stats.sleep_time, (715, 268)),
-                                                        (stats.leisure_time, (985, 268))]
+    print_stats: list[tuple[float, tuple[int, int]]] = [(stats.work_time, (770, 140)),
+                                                        (stats.focus_time, (1040, 140)),
+                                                        (stats.sleep_time, (770, 268)),
+                                                        (stats.leisure_time, (1040, 268))]
 
     for stat, position in print_stats:
         if stat > 0:
