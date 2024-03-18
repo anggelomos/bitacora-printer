@@ -18,11 +18,11 @@ classifiers = [
 python = "^3.10"
 pillow = "*"
 python-dateutil = "*"
-tickthon = "*"
+tickthon = "^0.2.8"
 python-weather = "*"
 auto-mix-prep = "^0.2.0"
 qrcode = "^7.4.2"
-nothion = "^0.2.2"
+nothion = "^0.3.0"
 openai = "^1.14.1"
 
 [tool.poetry.dev-dependencies]
