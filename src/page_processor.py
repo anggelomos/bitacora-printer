@@ -5,144 +5,201 @@ from datetime import datetime
 
 from PIL import ImageDraw, Image, ImageOps
 from PIL.Image import Image as ImageType
+from tickthon import Task
 
+from config import OLD_PAGES_FOLDER
 from src.image_processor import add_date_to_tasks_img, add_weather_to_img, add_tasks_to_img, \
-    add_stats_to_img, add_journal_qr_to_img, add_thoughts_to_img, add_date_to_logs_img
+    add_stats_to_img, add_journal_qr_to_img, add_journal_summary_to_img, add_date_to_logs_img
 from src.data_processor import DataProcessor
 
-data_processor = DataProcessor()
 
+class PageProcessor:
 
-def generate_tasks_page(page_date: datetime) -> ImageType:
-    """Generate tasks page.
+    def __init__(self):
+        self.data_processor = DataProcessor()
 
-    Args:
-        page_date: Date to add to page.
+    def generate_tasks_page(self, page_date: datetime) -> ImageType:
+        """Generate tasks page.
 
-    Returns:
-        Image object with tasks page.
-    """
-    logging.info(f"Generating tasks page for {page_date}")
+        Args:
+            page_date: Date to add to page.
 
-    tasks_page_base = Image.open("designs/bitacora_diaria_base_front_task.png")
-    raw_tasks_page = ImageDraw.Draw(tasks_page_base)
+        Returns:
+            Image object with tasks page.
+        """
+        logging.info(f"Generating tasks page for {page_date}")
 
-    tasks_page_with_date = add_date_to_tasks_img(raw_tasks_page, page_date)
-    tasks_page_with_weather = add_weather_to_img(tasks_page_with_date, page_date)
+        tasks_page_base = Image.open("designs/bitacora_diaria_base_front_task.png")
+        raw_tasks_page = ImageDraw.Draw(tasks_page_base)
 
-    task_titles = data_processor.get_day_active_task_titles(page_date.strftime("%Y-%m-%d"))
-    add_tasks_to_img(tasks_page_with_weather, task_titles)
+        tasks_page_with_date = add_date_to_tasks_img(raw_tasks_page, page_date)
+        tasks_page_with_weather = add_weather_to_img(tasks_page_with_date, page_date)
 
-    return tasks_page_base
+        task_data = self.data_processor.get_day_active_task_data(page_date.strftime("%Y-%m-%d"))
+        add_tasks_to_img(tasks_page_with_weather, task_data)
 
+        return tasks_page_base
 
-def generate_stats_page(page_date: datetime) -> ImageType:
-    """Generate a stats page as an image for a given date.
+    def generate_stats_page(self, page_date: datetime) -> ImageType:
+        """Generate a stats page as an image for a given date.
 
-    This function takes a date as an argument and generates the stats for the day, and a QR code for the journal of
-    the day.
+        This function takes a date as an argument and generates the stats for the day, and a QR code for the journal of
+        the day.
 
-    Args:
-        page_date: The date for which the logs page is to be generated. The date should be in the format
-        "YYYY-MM-DD".
+        Args:
+            page_date: The date for which the logs page is to be generated.
 
-    Returns:
-        A PIL Image object representing the generated stats page.
-    """
-    logging.info(f"Generating stats page for {page_date}")
+        Returns:
+            A PIL Image object representing the generated stats page.
+        """
+        logging.info(f"Generating stats page for {page_date}")
 
-    stats_page_base = Image.open("designs/bitacora_diaria_base_front_stats.png")
-    raw_logs_page = ImageDraw.Draw(stats_page_base)
+        stats_page_base = Image.open("designs/bitacora_diaria_base_front_stats.png")
+        raw_logs_page = ImageDraw.Draw(stats_page_base)
 
-    day_stats = data_processor.get_day_stats(page_date)
-    add_stats_to_img(raw_logs_page, day_stats)
+        day_stats = self.data_processor.get_day_stats(page_date)
+        add_stats_to_img(raw_logs_page, day_stats)
 
-    day_journal_url = data_processor.get_day_journal_url(page_date)
-    add_journal_qr_to_img(stats_page_base, day_journal_url)
+        day_journal_url = self.data_processor.get_day_journal_url(page_date)
+        add_journal_qr_to_img(stats_page_base, day_journal_url)
 
-    return stats_page_base
+        return stats_page_base
 
+    def generate_journal_page(self, page_date: datetime) -> ImageType:
+        """Generate a page with the daily journal.
 
-def generate_thoughts_page() -> ImageType:
-    thoughts_page_base = Image.open("designs/bitacora_diaria_base_back.png")
-    raw_thoughts_page = ImageDraw.Draw(thoughts_page_base)
+        Returns:
+            Image object with thoughts page.
+        """
+        journal_page_base = Image.open("designs/bitacora_diaria_base_back.png")
+        raw_journal_page = ImageDraw.Draw(journal_page_base)
+        raw_journal_summary = self.data_processor.get_day_journal(page_date)
 
-    with open("thoughts.txt") as f:
-        raw_thoughts = f.read()
+        journal_summary_with_spaces = [line if line.startswith("-") or index == 0 else f"\n{line}"
+                                       for index, line in enumerate(raw_journal_summary)]
 
-    raw_thoughts = raw_thoughts.replace("#", "").replace("*", "")
-    thoughts = "\n".join([textwrap.fill(line, width=58) for line in raw_thoughts.split("\n")])
-    add_thoughts_to_img(raw_thoughts_page, thoughts)
+        journal_summary_as_string = "\n".join([textwrap.fill(line,
+                                                             width=58,
+                                                             drop_whitespace=False,
+                                                             replace_whitespace=False)
+                                               for line in journal_summary_with_spaces])
 
-    return thoughts_page_base
+        journal_summary_cleaned = journal_summary_as_string.replace("#", "").replace("*", "")
 
+        add_journal_summary_to_img(raw_journal_page, journal_summary_cleaned)
+        return journal_page_base
 
-def generate_logs_page(page_date: datetime) -> ImageType:
-    logs_page_base = Image.open("designs/bitacora_diaria_base_front_logs.png")
-    raw_logs_page = ImageDraw.Draw(logs_page_base)
+    @staticmethod
+    def generate_logs_page(page_date: datetime) -> ImageType:
+        """Generate a page to log activities through the day.
 
-    add_date_to_logs_img(raw_logs_page, page_date)
+        Args:
+            page_date: The date for which the logs page is to be generated.
 
-    return logs_page_base
+        Returns:
+            A PIL Image object representing the generated logs page.
+        """
+        logs_page_base = Image.open("designs/bitacora_diaria_base_front_logs.png")
+        raw_logs_page = ImageDraw.Draw(logs_page_base)
 
+        add_date_to_logs_img(raw_logs_page, page_date)
 
-def save_pages_as_pdf(page_title: str, pages: list[ImageType], open_after_save: bool = False):
-    """Saves the given page as a PDF file and optionally opens it after saving.
+        return logs_page_base
 
-    Args:
-        page_title: The title of the page, which will be used as the filename for the saved PDF.
-        pages: The ImageDraw object representing the page to be saved.
-        open_after_save: A flag indicating whether to open the saved PDF file. Defaults to False.
-    """
-    logging.info(f"Saving {page_title}")
-    filename = f"{page_title}.pdf"
+    @staticmethod
+    def generate_recap_page(raw_summary_recap: str) -> ImageType:
+        """Generate a page with the daily recap.
 
-    other_pages = pages[1:] if len(pages) > 1 else []
-    if len(pages) > 0:
-        pages[0].save(filename, "PDF", resolution=700, save_all=True, append_images=other_pages)
+        Args:
+            raw_summary_recap: The daily recap to add to the page.
 
-        if open_after_save:
-            os.startfile(filename)
+        Returns:
+            A PIL Image object representing the generated recap page.
+        """
+        recap_page_base = Image.open("designs/bitacora_diaria_base_back.png")
+        raw_recap_page = ImageDraw.Draw(recap_page_base)
 
+        summary_recap = "\n".join([textwrap.fill(paragraph, width=58) for paragraph in raw_summary_recap.split("\n")])
 
-def save_pages_as_png(page_title: str, page: ImageType):
-    """Saves the given page as a PDF file and optionally opens it after saving.
+        add_journal_summary_to_img(raw_recap_page, summary_recap)
+        return recap_page_base
 
-    Args:
-        page_title: The title of the page, which will be used as the filename for the saved PDF.
-        page: The ImageDraw object representing the page to be saved.
-    """
-    logging.info(f"Saving {page_title}")
-    filename = f"{page_title}.png"
+    @staticmethod
+    def generate_old_bitacora_pages(stats_page: ImageType, old_date: datetime) -> list[ImageType]:
+        """Generate a front page as an image for a given date.
 
-    page.save(filename, "PNG")
+        This function takes a date as an argument and generates a front page as an image. The front page includes the
+        tasks for the given date, the logs for the given date, the stats for the day, and a QR code for the journal of
+        the day.
 
+        Args:
+            stats_page: The logs page to merge with the tasks page.
+            old_date: The date for which the logs page is to be generated.
 
-def generate_front_page_merged(logs_page: ImageType, logs_date: datetime, files_folder: str) -> list[ImageType]:
-    """Generate a front page as an image for a given date.
+        Returns:
+            A PIL Image object representing the generated front page.
+        """
+        logging.info(f"Generating front page for {old_date}")
 
-    This function takes a date as an argument and generates a front page as an image. The front page includes the
-    tasks for the given date, the logs for the given date, the stats for the day, and a QR code for the journal of the
-    day.
+        try:
+            old_task_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}-old-task-page.png")
+            old_task_page.paste(stats_page, (0, 0), mask=ImageOps.invert(stats_page.copy().convert('L')))
 
-    Args:
-        logs_page: The logs page to merge with the tasks page.
-        logs_date: The date for which the logs page is to be generated. The date should be in the format
-        "YYYY-MM-DD".
-        files_folder: The folder where the pages to merge are retrieved from
+            old_journal_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}"
+                                          f"-old-journal-page.png")
+            old_recap_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}-old-recap-page.png")
 
-    Returns:
-        A PIL Image object representing the generated front page.
-    """
-    logging.info(f"Generating front page for {logs_date}")
+            return [old_task_page, old_journal_page, old_recap_page]
+        except FileNotFoundError:
+            logging.info(f"Old pages for {old_date} not found")
 
-    try:
-        old_task_page = Image.open(f"{files_folder}{logs_date.strftime('%d-%b-%Y').lower()}-old-task-page.png")
-        old_thoughts_page = Image.open(f"{files_folder}{logs_date.strftime('%d-%b-%Y').lower()}-old-thoughts-page.png")
-        old_task_page.paste(logs_page, (0, 0), mask=ImageOps.invert(logs_page.copy().convert('L')))
+        return []
 
-        return [old_task_page, old_thoughts_page]
-    except FileNotFoundError:
-        logging.info(f"Old pages for {logs_date} not found")
+    @staticmethod
+    def save_pages_as_pdf(page_title: str, pages: list[ImageType], open_after_save: bool = False):
+        """Saves the given page as a PDF file and optionally opens it after saving.
 
-    return []
+        Args:
+            page_title: The title of the page, which will be used as the filename for the saved PDF.
+            pages: The ImageDraw object representing the page to be saved.
+            open_after_save: A flag indicating whether to open the saved PDF file. Defaults to False.
+        """
+        logging.info(f"Saving {page_title}")
+        filename = f"{page_title}.pdf"
+
+        other_pages = pages[1:] if len(pages) > 1 else []
+        if len(pages) > 0:
+            pages[0].save(filename, "PDF", resolution=700, save_all=True, append_images=other_pages)
+
+            if open_after_save:
+                os.startfile(filename)
+
+    @staticmethod
+    def save_pages_as_png(page_title: str, page: ImageType):
+        """Saves the given page as a PDF file and optionally opens it after saving.
+
+        Args:
+            page_title: The title of the page, which will be used as the filename for the saved PDF.
+            page: The ImageDraw object representing the page to be saved.
+        """
+        logging.info(f"Saving {page_title}")
+        filename = f"{page_title}.png"
+
+        page.save(filename, "PNG")
+
+    def upload_recap(self, summary_recap: str, tasks_date: datetime):
+        self.data_processor.notion_client.create_note_page(title=f"Recap {tasks_date.strftime('%d-%b-%Y').lower()}",
+                                                           page_type="note",
+                                                           page_subtype=("day-recap",),
+                                                           date=tasks_date,
+                                                           content=summary_recap)
+
+    def create_day_highlights(self, day_recap: list[str], date: datetime):
+        highlight_identifier = "- !"
+        highlights = [highlight.replace(highlight_identifier, "").strip()
+                      for highlight in day_recap if highlight.startswith(highlight_identifier)]
+
+        for highlight in highlights:
+            highlight_task = Task(title=highlight, created_date=date.isoformat(),
+                                  due_date="", ticktick_etag="", ticktick_id="")
+            self.data_processor.notion_client.add_highlight_log(highlight_task)

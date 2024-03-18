@@ -45,7 +45,7 @@ def _does_task_have_specific_time(task_date: str) -> bool:
     return task_date != "12:00am"
 
 
-def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) -> ImageDrawType:
+def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str, str]]) -> ImageDrawType:
     """Add tasks to base image.
 
     Args:
@@ -70,7 +70,7 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) ->
     task_font = ImageFont.truetype(font_path, size=base_task_font_size)
     task_bold_font = ImageFont.truetype(bold_font_path, size=base_task_font_size)
 
-    for task_title, task_date in tasks:
+    for task_title, task_date, task_color in tasks:
         current_task_font = task_font
         current_date_font = date_font
 
@@ -85,16 +85,20 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str]]) ->
 
             main_task_height += task_height_padding
 
-        if _does_task_have_specific_time(task_date):
-            max_char_len = 48
-            task_title = task_title[:max_char_len].strip() + "..." if len(task_title) >= max_char_len else task_title
+        max_char_len = 47
+        task_title = task_title[:max_char_len].strip() + "..." if len(task_title) >= max_char_len else task_title
 
+        if _does_task_have_specific_time(task_date):
             left_width = task_date_left_width
             base_image.text((base_left_width, current_height), task_date, font=current_date_font, fill="black")
         else:
             left_width = base_left_width
             task_title = f"Ξ {task_title}"
 
+        base_image.rounded_rectangle(xy=(left_width - 20, current_height + 5, left_width + 15, current_height + 95),
+                                     radius=10,
+                                     fill=task_color)
+        left_width += 30
         base_image.text((left_width, current_height), task_title, font=current_task_font, fill="black")
         current_height += task_height_padding
 
@@ -245,7 +249,7 @@ def add_journal_qr_to_img(base_image: ImageType, journal_url: str) -> ImageType:
     return base_image
 
 
-def add_thoughts_to_img(base_image: ImageDrawType, thoughts: str) -> ImageDrawType:
+def add_journal_summary_to_img(base_image: ImageDrawType, thoughts: str) -> ImageDrawType:
     logging.info("Adding thoughts to image")
     thoughts = "\n".join(thoughts.split("\n")[:41])
     base_image.text((135, 120), thoughts, font=ImageFont.truetype(font_path, size=68), spacing=13, fill="black")

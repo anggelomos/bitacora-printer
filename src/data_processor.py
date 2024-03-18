@@ -2,18 +2,20 @@ import logging
 import os
 from datetime import datetime
 
-from typing import List
+from typing import List, Any
+from openai import OpenAI
 
 from nothion import NotionClient, PersonalStats
-from nothion._config import NT_NOTES_DB_ID
-from nothion._notion_table_headers import NotesHeaders
 from tickthon import TicktickClient, Task
+
+from src.ai_prompts import AIPrompts
 
 
 class DataProcessor:
     def __init__(self):
         self.ticktick_client = TicktickClient(os.getenv("TT_USER"), os.getenv("TT_PASS"))
         self.notion_client = NotionClient(os.getenv("NT_AUTH"))
+        self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     def _process_task_title(self, task: Task) -> str:
         """Extract and process task titles.
@@ -37,8 +39,6 @@ class DataProcessor:
             Processed tasks title.
         """
         task_type = ""
-        if "work" in task.tags:
-            task_type = "^"
 
         important_task = ""
         if "main-task" in task.tags:
@@ -51,7 +51,47 @@ class DataProcessor:
 
         return f"{important_task}{task_type}{task_title}"
 
-    def get_day_active_task_titles(self, date: str) -> list[tuple[str, str]]:
+    @staticmethod
+    def _get_tag_color(task: Task) -> str:
+        """Get tag color for task.
+
+        Args:
+            task: Task to get tag color for.
+
+        Returns:
+            Tag color code.
+        """
+        tag_color = "#98b0fc"
+        for tag in task.tags:
+            match tag:
+                case "task-active":
+                    tag_color = "#d6e9ce"
+                    break
+                case "work":
+                    tag_color = "#99cdf6"
+                    break
+                case "habit":
+                    tag_color = "#ffeaa9"
+                    break
+                case "routine" | "task-routine":
+                    tag_color = "#f7dd8b"
+                    break
+                case "scrum-ceremony":
+                    tag_color = "#7b96c5"
+                    break
+                case "task-pasive":
+                    tag_color = "#addba5"
+                    break
+                case "event":
+                    tag_color = "#c595f4"
+                    break
+                case "reminder":
+                    tag_color = "#ccd2e0"
+                    break
+
+        return tag_color
+
+    def get_day_active_task_data(self, date: str) -> list[tuple[str, str, str]]:
         """Get active tasks for a given date.
 
         Args:
@@ -59,7 +99,7 @@ class DataProcessor:
 
         Returns:
             List of processed tasks titles for given date ordered chronologically with the following format:
-            (task_title, task_date)
+            (task_title, task_date, task_tag_color_code)
         """
         logging.info(f"Getting active tasks for date {date}")
 
@@ -71,7 +111,8 @@ class DataProcessor:
         raw_tasks = sorted_tasks[:max_amount_tasks]
 
         processed_task_titles = [(self._process_task_title(task),
-                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower())
+                                 datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower(),
+                                 self._get_tag_color(task))
                                  for task in raw_tasks]
 
         return processed_task_titles
@@ -113,12 +154,71 @@ class DataProcessor:
 
     def get_day_journal_url(self, date: datetime) -> str:
         logging.info(f"Getting journal url for date {date}")
+        return self.notion_client.get_daily_journal_data(date).get("url", "")
 
-        payload = {"filter": {"and": [
-            {"property": NotesHeaders.TYPE.value, "select": {"equals": "journal"}},
-            {"property": NotesHeaders.SUBTYPE.value, "multi_select": {"contains": "daily"}},
-            {"property": NotesHeaders.DUE_DATE.value, "date": {"equals": date.strftime("%Y-%m-%d")}}
-        ]},
-            "page_size": 1
-        }
-        return self.notion_client.notion_api.query_table(NT_NOTES_DB_ID, payload)[0].get("url", "")
+    def _find_value_recursively(self, raw_list: list, key: str) -> list:
+        """Find a value in a list of lists recursively.
+
+        Args:
+            raw_list: List of lists to search for value.
+            key: Key to search for.
+
+        Returns:
+            List of values found.
+        """
+        found_values = []
+        for item in raw_list:
+            if isinstance(item, list):
+                found_values.extend(self._find_value_recursively(item, key))
+            elif isinstance(item, str) and key in item.lower():
+                return raw_list
+        return found_values
+
+    def _flatten_list_recursively(self, nested_list: list) -> list[Any]:
+        """Flatten a list of lists recursively.
+
+        Args:
+            nested_list: List of lists to flatten.
+
+        Returns:
+            List with one level of nesting.
+        """
+        flattened_list = []
+        for item in nested_list:
+            if isinstance(item, list):
+                flattened_list.extend(self._flatten_list_recursively(item))
+            else:
+                flattened_list.append(item)
+        return flattened_list
+
+    def _get_journal_content(self, date: datetime, keyword: str, start_block: int) -> list:
+        raw_journal_content = self.notion_client.get_daily_journal_content(date)
+
+        journal_reflection = self._find_value_recursively(raw_journal_content, keyword).pop()
+        journal_reflection_summary = self._flatten_list_recursively(journal_reflection[start_block:])
+
+        return journal_reflection_summary
+
+    def get_day_journal(self, date: datetime) -> list[str]:
+        logging.info(f"Getting journal for date {date}")
+        return self._get_journal_content(date, "night reflection", 2)
+
+    def get_day_recap(self, date: datetime) -> list[str]:
+        logging.info(f"Getting recap for date {date}")
+        return self._get_journal_content(date, "day logs", 0)
+
+    def generate_recap_summary(self, raw_recap_logs: list[str]) -> str:
+        logging.info("Getting recap summary for date")
+
+        recap_logs = "\n".join(raw_recap_logs)
+        response = self.openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=AIPrompts.summarize_day_recap(recap_logs),
+            temperature=0.6,
+            max_tokens=400,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+
+        return response.choices[0].message.content
