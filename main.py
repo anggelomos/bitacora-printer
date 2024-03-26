@@ -4,7 +4,7 @@ from config import OLD_PAGES_FOLDER
 from src.cli_processor import get_pages_dates
 from src.page_processor import PageProcessor
 
-current_date, old_date = get_pages_dates()
+current_date, old_date, wakeup_hour = get_pages_dates()
 pp = PageProcessor()
 
 stats_page = pp.generate_stats_page(old_date)
@@ -19,11 +19,13 @@ recap_page = pp.generate_recap_page(summary_recap)
 pp.upload_recap(summary_recap, old_date)
 pp.create_day_highlights(day_recap, old_date)
 
+pp.data_processor.create_water_logs(current_date, wakeup_hour)
+
 old_bitacora_pages = pp.generate_old_bitacora_pages(stats_page, old_date)
 
 pp.save_pages_as_pdf(f"bitacora-print-{current_date.strftime('%d-%b-%Y').lower()}",
                      [stats_page, journal_page, tasks_page, recap_page, logs_page],
-                     open_after_save=True)
+                     open_after_save=False)
 
 pp.save_pages_as_pdf(f"bitacora-save-{old_date.strftime('%d-%b-%Y').lower()}",
                      old_bitacora_pages,

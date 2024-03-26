@@ -1,8 +1,11 @@
+import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from typing import List, Any
+
+from nothion._config import NT_LOGS_DB_ID
 from openai import OpenAI
 
 from nothion import NotionClient, PersonalStats
@@ -111,8 +114,8 @@ class DataProcessor:
         raw_tasks = sorted_tasks[:max_amount_tasks]
 
         processed_task_titles = [(self._process_task_title(task),
-                                 datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower(),
-                                 self._get_tag_color(task))
+                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower(),
+                                  self._get_tag_color(task))
                                  for task in raw_tasks]
 
         return processed_task_titles
@@ -222,3 +225,25 @@ class DataProcessor:
         )
 
         return response.choices[0].message.content
+
+    def create_water_logs(self, date: datetime, initial_hour: int):
+        logging.info(f"Creating water logs for date {date} starting at {initial_hour}")
+        clean_date = date.replace(minute=0, second=0, microsecond=0)
+
+        for log_hour in range(10):
+            log_date = clean_date.replace(hour=initial_hour + log_hour)
+
+            create_water_log_payload = {
+                "parent": {"database_id": NT_LOGS_DB_ID},
+                "icon": {"type": "emoji", "emoji": "💧"},
+                "properties": {"Type": {"select": {"name": "💧"}},
+                               "Manual datetime": {"date": {"start": log_date.isoformat()}}}}
+
+            get_water_log_payload = {"filter": {"and": [{"property": "Type",
+                                                         "select": {"equals": "💧"}},
+                                                        {"property": "Manual datetime",
+                                                         "date": {"equals": log_date.isoformat()}}]},
+                                     "page_size": 1}
+
+            if len(self.notion_client.notion_api.query_table(NT_LOGS_DB_ID, get_water_log_payload)) == 0:
+                self.notion_client.notion_api.create_table_entry(json.dumps(create_water_log_payload))
