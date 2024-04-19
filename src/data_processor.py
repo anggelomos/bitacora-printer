@@ -12,6 +12,7 @@ from nothion import NotionClient, PersonalStats
 from tickthon import TicktickClient, Task
 
 from src.ai_prompts import AIPrompts
+from src.data.active_task_model import ActiveTaskModel
 
 
 class DataProcessor:
@@ -23,16 +24,7 @@ class DataProcessor:
     def _process_task_title(self, task: Task) -> str:
         """Extract and process task titles.
 
-        The task titles will be processed in the following way:
-
-        * The task title starts with a character that indicates the task type.
-        ^: Work task
-        -: Personal task
-        ~: Project task
-
-        * Important tasks will have an exclamation mark before the type character, for example ^!.
-
-        * The task titles will have a maximum length, if the title is longer it will be truncated with
+        The task titles will have a maximum length, if the title is longer it will be truncated with
         an ellipsis.
 
         Args:
@@ -41,18 +33,12 @@ class DataProcessor:
         Returns:
             Processed tasks title.
         """
-        task_type = ""
-
-        important_task = ""
-        if "main-task" in task.tags:
-            important_task = "!"
-
         task_title = task.title.strip()
-        max_char_length = 52
+        max_char_length = 54
         if len(task_title) >= max_char_length:
             task_title = task_title[:max_char_length].strip() + "..."
 
-        return f"{important_task}{task_type}{task_title}"
+        return task_title
 
     @staticmethod
     def _get_tag_color(task: Task) -> str:
@@ -94,7 +80,7 @@ class DataProcessor:
 
         return tag_color
 
-    def get_day_active_task_data(self, date: str) -> list[tuple[str, str, str]]:
+    def get_day_active_task_data(self, date: str) -> list[ActiveTaskModel]:
         """Get active tasks for a given date.
 
         Args:
@@ -102,21 +88,19 @@ class DataProcessor:
 
         Returns:
             List of processed tasks titles for given date ordered chronologically with the following format:
-            (task_title, task_date, task_tag_color_code)
+            (task_title, task_date, task_tag_color_code, column_id)
         """
         logging.info(f"Getting active tasks for date {date}")
 
         active_tasks = self.ticktick_client.get_active_tasks()
-        day_tasks = [task for task in active_tasks if task.due_date.startswith(date)]
-        sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
+        sorted_tasks = sorted(active_tasks, key=lambda task: task.due_date)
 
-        max_amount_tasks = 23
-        raw_tasks = sorted_tasks[:max_amount_tasks]
-
-        processed_task_titles = [(self._process_task_title(task),
-                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower(),
-                                  self._get_tag_color(task))
-                                 for task in raw_tasks]
+        processed_task_titles = [ActiveTaskModel(self._process_task_title(task),
+                                                 datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower()
+                                                 if task.due_date else "",
+                                                 self._get_tag_color(task),
+                                                 task.column_id)
+                                 for task in sorted_tasks]
 
         return processed_task_titles
 
@@ -225,25 +209,3 @@ class DataProcessor:
         )
 
         return response.choices[0].message.content
-
-    def create_water_logs(self, date: datetime, initial_hour: int):
-        logging.info(f"Creating water logs for date {date} starting at {initial_hour}")
-        clean_date = date.replace(minute=0, second=0, microsecond=0)
-
-        for log_hour in range(10):
-            log_date = clean_date.replace(hour=initial_hour + log_hour)
-
-            create_water_log_payload = {
-                "parent": {"database_id": NT_LOGS_DB_ID},
-                "icon": {"type": "emoji", "emoji": "💧"},
-                "properties": {"Type": {"select": {"name": "💧"}},
-                               "Manual datetime": {"date": {"start": log_date.isoformat()}}}}
-
-            get_water_log_payload = {"filter": {"and": [{"property": "Type",
-                                                         "select": {"equals": "💧"}},
-                                                        {"property": "Manual datetime",
-                                                         "date": {"equals": log_date.isoformat()}}]},
-                                     "page_size": 1}
-
-            if len(self.notion_client.notion_api.query_table(NT_LOGS_DB_ID, get_water_log_payload)) == 0:
-                self.notion_client.notion_api.create_table_entry(json.dumps(create_water_log_payload))

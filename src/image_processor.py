@@ -12,6 +12,8 @@ from nothion import PersonalStats
 from python_weather import Kind
 import qrcode
 
+from src.data.active_task_model import ActiveTaskModel, ActiveTaskColumns
+
 font_path = "fonts/RobotoMono-Regular.ttf"
 bold_font_path = "fonts/RobotoMono-Bold.ttf"
 
@@ -37,15 +39,62 @@ def add_date_to_tasks_img(base_image: ImageDrawType, date: datetime) -> ImageDra
     return base_image
 
 
-def _is_main_task(task_title: str) -> bool:
-    return task_title.startswith("!")
-
-
 def _does_task_have_specific_time(task_date: str) -> bool:
     return task_date != "12:00am"
 
 
-def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str, str]]) -> ImageDrawType:
+def _group_tasks_by_column(tasks: list[ActiveTaskModel]) -> dict[str, list[ActiveTaskModel]]:
+    """Group tasks by column.
+    
+    Args:
+        tasks: List of tasks to group by column.
+
+    Returns:
+        Dictionary with tasks grouped by column.
+    """
+    return {column: [task for task in tasks if task.column == column]
+            for column in ActiveTaskColumns.get_column_ids()}
+
+
+def _add_tasks_group_to_img(base_image: ImageDrawType, tasks: list[ActiveTaskModel], current_height: int) \
+        -> tuple[ImageDrawType, int]:
+    """Add tasks group to base image.
+
+    Args:
+        base_image: Base image to draw on.
+        tasks: List of tasks to add to base image.
+        current_height: Current height of the image.
+
+    Returns:
+        Tuple with current height and base image with tasks added.
+    """
+    task_height_padding = 118.5
+    base_left_width = 2630
+    base_task_font_size = 68
+    task_font = ImageFont.truetype(font_path, size=base_task_font_size)
+
+    for task in tasks:
+        text_width = base_image.textlength(task.title, font=task_font)
+        base_image.text((base_left_width - text_width, current_height), task.title, font=task_font, fill="black")
+        current_height += task_height_padding
+
+    return base_image, current_height
+
+
+def _add_divider_to_img(base_image: ImageDrawType, current_height: int) -> tuple[ImageDrawType, int]:
+    left_width = 2630
+    divider_height = 15
+
+    current_height += divider_height
+    base_image.line((left_width - 2300, current_height, left_width, current_height), fill="black", width=5)
+    base_image.line((left_width - 1500, current_height, left_width, current_height), fill="black", width=8)
+    base_image.line((left_width - 1000, current_height, left_width, current_height), fill="black", width=12)
+    current_height += (divider_height * 2)
+
+    return base_image, current_height
+
+
+def add_tasks_to_img(base_image: ImageDrawType, tasks: list[ActiveTaskModel]) -> ImageDrawType:
     """Add tasks to base image.
 
     Args:
@@ -56,51 +105,26 @@ def add_tasks_to_img(base_image: ImageDrawType, tasks: list[tuple[str, str, str]
         Base image with tasks added.
     """
     logging.info("Adding tasks to image")
-    main_task_height = 495
-    current_height = 816
-    task_height_padding = 118.5
-    base_left_width = 355
-    task_date_left_width = base_left_width + 288
+    work_tasks_height = 620
+    personal_tasks_height = 2105
 
-    base_date_font_size = 58
-    date_font = ImageFont.truetype(font_path, size=base_date_font_size)
-    date_bold_font = ImageFont.truetype(bold_font_path, size=base_date_font_size)
+    grouped_tasks = _group_tasks_by_column(tasks)
 
-    base_task_font_size = 68
-    task_font = ImageFont.truetype(font_path, size=base_task_font_size)
-    task_bold_font = ImageFont.truetype(bold_font_path, size=base_task_font_size)
+    base_image, work_tasks_height = _add_tasks_group_to_img(base_image,
+                                                            grouped_tasks[ActiveTaskColumns.WORK_GREAT.value],
+                                                            work_tasks_height)
+    base_image, work_tasks_height = _add_divider_to_img(base_image, work_tasks_height)
+    base_image, work_tasks_height = _add_tasks_group_to_img(base_image,
+                                                            grouped_tasks[ActiveTaskColumns.WORK_AMAZING.value],
+                                                            work_tasks_height)
 
-    for task_title, task_date, task_color in tasks:
-        current_task_font = task_font
-        current_date_font = date_font
-
-        if _is_main_task(task_title):
-            current_task_font = task_bold_font
-            current_date_font = date_bold_font
-
-            # Print main task at the top of the page
-            main_task_title = task_title.replace("!", "* ")
-            base_image.text((base_left_width, main_task_height), main_task_title, font=current_task_font,
-                            fill="black")
-
-            main_task_height += task_height_padding
-
-        max_char_len = 47
-        task_title = task_title[:max_char_len].strip() + "..." if len(task_title) >= max_char_len else task_title
-
-        if _does_task_have_specific_time(task_date):
-            left_width = task_date_left_width
-            base_image.text((base_left_width, current_height), task_date, font=current_date_font, fill="black")
-        else:
-            left_width = base_left_width
-            task_title = f"Ξ {task_title}"
-
-        base_image.rounded_rectangle(xy=(left_width - 20, current_height + 5, left_width + 15, current_height + 95),
-                                     radius=10,
-                                     fill=task_color)
-        left_width += 30
-        base_image.text((left_width, current_height), task_title, font=current_task_font, fill="black")
-        current_height += task_height_padding
+    base_image, personal_tasks_height = _add_tasks_group_to_img(base_image,
+                                                                grouped_tasks[ActiveTaskColumns.PERSONAL_GREAT.value],
+                                                                personal_tasks_height)
+    base_image, personal_tasks_height = _add_divider_to_img(base_image, personal_tasks_height)
+    base_image, personal_tasks_height = _add_tasks_group_to_img(base_image,
+                                                                grouped_tasks[ActiveTaskColumns.PERSONAL_AMAZING.value],
+                                                                personal_tasks_height)
 
     return base_image
 
