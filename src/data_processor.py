@@ -93,7 +93,8 @@ class DataProcessor:
         logging.info(f"Getting active tasks for date {date}")
 
         active_tasks = self.ticktick_client.get_active_tasks()
-        sorted_tasks = sorted(active_tasks, key=lambda task: task.due_date)
+        day_tasks = [task for task in active_tasks if task.due_date.startswith(date)]
+        sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
 
         processed_task_titles = [ActiveTaskModel(self._process_task_title(task),
                                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower()

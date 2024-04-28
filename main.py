@@ -10,12 +10,13 @@ pp = PageProcessor()
 stats_page = pp.generate_stats_page(old_date)
 journal_page = pp.generate_journal_page(old_date)
 tasks_page = pp.generate_tasks_page(current_date)
+empty_page = pp.generate_empty_page()
 
 
 old_bitacora_pages = pp.generate_old_bitacora_pages(stats_page, old_date)
 
 pp.save_pages_as_pdf(f"bitacora-print-{current_date.strftime('%d-%b-%Y').lower()}",
-                     [stats_page, journal_page, tasks_page],
+                     [empty_page, empty_page, stats_page, journal_page, tasks_page],
                      open_after_save=True)
 
 pp.save_pages_as_pdf(f"bitacora-save-{old_date.strftime('%d-%b-%Y').lower()}",

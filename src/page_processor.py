@@ -71,7 +71,7 @@ class PageProcessor:
         Returns:
             Image object with thoughts page.
         """
-        journal_page_base = Image.open("designs/bitacora_diaria_base_back.png")
+        journal_page_base = Image.open("designs/bitacora_diaria_empty.png")
         raw_journal_page = ImageDraw.Draw(journal_page_base)
         raw_journal_summary = self.data_processor.get_day_journal(page_date)
 
@@ -116,7 +116,7 @@ class PageProcessor:
         Returns:
             A PIL Image object representing the generated recap page.
         """
-        recap_page_base = Image.open("designs/bitacora_diaria_base_back.png")
+        recap_page_base = Image.open("designs/bitacora_diaria_empty.png")
         raw_recap_page = ImageDraw.Draw(recap_page_base)
 
         summary_recap = "\n".join([textwrap.fill(paragraph, width=58) for paragraph in raw_summary_recap.split("\n")])
@@ -203,3 +203,12 @@ class PageProcessor:
             highlight_task = Task(title=highlight, created_date=date.isoformat(),
                                   due_date="", ticktick_etag="", ticktick_id="")
             self.data_processor.notion_client.add_highlight_log(highlight_task)
+
+    @staticmethod
+    def generate_empty_page() -> ImageType:
+        """Generate an empty page.
+
+        Returns:
+            Image object with empty page.
+        """
+        return Image.open("designs/bitacora_diaria_empty.png")
