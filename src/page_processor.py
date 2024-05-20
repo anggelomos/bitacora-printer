@@ -65,28 +65,13 @@ class PageProcessor:
 
         return stats_page_base
 
-    def generate_journal_page(self, page_date: datetime) -> ImageType:
+    def generate_journal_page(self) -> ImageType:
         """Generate a page with the daily journal.
 
         Returns:
             Image object with thoughts page.
         """
-        journal_page_base = Image.open("designs/bitacora_diaria_empty.png")
-        raw_journal_page = ImageDraw.Draw(journal_page_base)
-        raw_journal_summary = self.data_processor.get_day_journal(page_date)
-
-        journal_summary_with_spaces = [line if line.startswith("-") or index == 0 else f"\n{line}"
-                                       for index, line in enumerate(raw_journal_summary)]
-
-        journal_summary_as_string = "\n".join([textwrap.fill(line,
-                                                             width=58,
-                                                             drop_whitespace=False,
-                                                             replace_whitespace=False)
-                                               for line in journal_summary_with_spaces])
-
-        journal_summary_cleaned = journal_summary_as_string.replace("#", "").replace("*", "")
-
-        add_journal_summary_to_img(raw_journal_page, journal_summary_cleaned)
+        journal_page_base = Image.open("designs/bitacora_diaria_base_journal.png")
         return journal_page_base
 
     @staticmethod
@@ -119,7 +104,7 @@ class PageProcessor:
         recap_page_base = Image.open("designs/bitacora_diaria_empty.png")
         raw_recap_page = ImageDraw.Draw(recap_page_base)
 
-        summary_recap = "\n".join([textwrap.fill(paragraph, width=58) for paragraph in raw_summary_recap.split("\n")])
+        summary_recap = "\n".join([textwrap.fill(paragraph, width=68) for paragraph in raw_summary_recap.split("\n")])
 
         add_journal_summary_to_img(raw_recap_page, summary_recap)
         return recap_page_base

@@ -13,7 +13,7 @@ class AIPrompts:
         return [{"role": "system",
                  "content": "Generate a short summary in prose form, based on the list of log entries provided. "
                             "This summary should adhere to the following criteria:\n\n- Character Limit: The "
-                            "summary must strictly have less than 1600 characters.\n\n- Language Use: The summary "
+                            "summary must strictly have less than 1000 characters.\n\n- Language Use: The summary "
                             "must be in first person and must use a simple language.\n\n- Always include the exact "
                             "dates, times and names mentioned.\n\n- Content Focus: Concentrate mostly on "
                             "non-routine activities, particularly emphasizing those entries marked with a '!'. "

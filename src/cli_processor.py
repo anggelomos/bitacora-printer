@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from config import DEFAULT_TASK_DELTA_DAYS, DEFAULT_LOGS_DELTA_DAYS, CURRENT_DATE
 
 
-def get_pages_dates() -> tuple[datetime]:
+def get_pages_dates() -> tuple[datetime, datetime]:
     """Gets the dates for which to generate pages.
 
     Returns:
