@@ -8,8 +8,8 @@ from PIL.Image import Image as ImageType
 from tickthon import Task
 
 from config import OLD_PAGES_FOLDER
-from src.image_processor import add_date_to_tasks_img, add_weather_to_img, add_tasks_to_img, \
-    add_stats_to_img, add_journal_qr_to_img, add_journal_summary_to_img, add_date_to_logs_img
+from src.image_processor import (add_day_date_to_img, add_week_date_to_img, add_day_tasks_to_img, add_week_tasks_to_img,
+                                 add_stats_to_img, add_journal_qr_to_img, add_journal_summary_to_img, add_date_to_logs_img)
 from src.data_processor import DataProcessor
 
 
@@ -18,8 +18,8 @@ class PageProcessor:
     def __init__(self):
         self.data_processor = DataProcessor()
 
-    def generate_tasks_page(self, page_date: datetime) -> ImageType:
-        """Generate tasks page.
+    def generate_daily_tasks_page(self, page_date: datetime) -> ImageType:
+        """Generate daily tasks page.
 
         Args:
             page_date: Date to add to page.
@@ -27,16 +27,36 @@ class PageProcessor:
         Returns:
             Image object with tasks page.
         """
-        logging.info(f"Generating tasks page for {page_date}")
+        logging.info(f"Generating daily tasks page for {page_date}")
 
         tasks_page_base = Image.open("designs/bitacora_diaria_base_front_task.png")
         raw_tasks_page = ImageDraw.Draw(tasks_page_base)
 
-        tasks_page_with_date = add_date_to_tasks_img(raw_tasks_page, page_date)
-        tasks_page_with_weather = add_weather_to_img(tasks_page_with_date, page_date)
+        tasks_page_with_date = add_day_date_to_img(raw_tasks_page, page_date)
 
-        task_data = self.data_processor.get_day_active_task_data(page_date.strftime("%Y-%m-%d"))
-        add_tasks_to_img(tasks_page_with_weather, task_data)
+        task_data = self.data_processor.get_active_task_data(page_date.strftime("%Y-%m-%d"), 50)
+        add_day_tasks_to_img(tasks_page_with_date, task_data)
+
+        return tasks_page_base
+
+    def generate_weekly_tasks_page(self, week_start_date: datetime) -> ImageType:
+        """Generate tasks page.
+
+        Args:
+            week_start_date: Date to add to page.
+
+        Returns:
+            Image object with tasks page.
+        """
+        logging.info(f"Generating weekly tasks page for {week_start_date}")
+
+        tasks_page_base = Image.open("designs/bitacora_semanal_base_front_task.png")
+        raw_tasks_page = ImageDraw.Draw(tasks_page_base)
+
+        tasks_page_with_date = add_week_date_to_img(raw_tasks_page, week_start_date)
+
+        task_data = self.data_processor.get_active_task_data(date="", max_title_length=45)
+        add_week_tasks_to_img(tasks_page_with_date, task_data)
 
         return tasks_page_base
 

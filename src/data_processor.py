@@ -21,7 +21,7 @@ class DataProcessor:
         self.notion_client = NotionClient(os.getenv("NT_AUTH"))
         self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    def _process_task_title(self, task: Task) -> str:
+    def _process_task_title(self, task: Task, max_title_length: int) -> str:
         """Extract and process task titles.
 
         The task titles will have a maximum length, if the title is longer it will be truncated with
@@ -29,14 +29,14 @@ class DataProcessor:
 
         Args:
             task: Task to process.
+            max_title_length: Maximum length for task titles.
 
         Returns:
             Processed tasks title.
         """
         task_title = task.title.strip()
-        max_char_length = 54
-        if len(task_title) >= max_char_length:
-            task_title = task_title[:max_char_length].strip() + "..."
+        if len(task_title) >= max_title_length:
+            task_title = task_title[:max_title_length].strip() + "..."
 
         return task_title
 
@@ -80,11 +80,12 @@ class DataProcessor:
 
         return tag_color
 
-    def get_day_active_task_data(self, date: str) -> list[ActiveTaskModel]:
-        """Get active tasks for a given date.
+    def get_active_task_data(self, date: str, max_title_length: int) -> list[ActiveTaskModel]:
+        """Get active tasks for a given date. If no date is provided, all active tasks will be returned.
 
         Args:
             date: Date for which to get tasks in the format YYYY-MMM-DD.
+            max_title_length: Maximum length for task titles.
 
         Returns:
             List of processed tasks titles for given date ordered chronologically with the following format:
@@ -92,11 +93,14 @@ class DataProcessor:
         """
         logging.info(f"Getting active tasks for date {date}")
 
-        active_tasks = self.ticktick_client.get_active_tasks()
-        day_tasks = [task for task in active_tasks if task.due_date.startswith(date)]
+        day_tasks = self.ticktick_client.get_active_tasks()
+
+        if date:
+            day_tasks = [task for task in day_tasks if task.due_date.startswith(date)]
+
         sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
 
-        processed_task_titles = [ActiveTaskModel(self._process_task_title(task),
+        processed_task_titles = [ActiveTaskModel(self._process_task_title(task, max_title_length),
                                                  datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower()
                                                  if task.due_date else "",
                                                  self._get_tag_color(task),

@@ -3,25 +3,30 @@ from datetime import datetime, timedelta
 from config import DEFAULT_TASK_DELTA_DAYS, DEFAULT_LOGS_DELTA_DAYS, CURRENT_DATE
 
 
-def get_pages_dates() -> tuple[datetime, datetime]:
+def get_pages_dates() -> tuple[datetime, datetime | None]:
     """Gets the dates for which to generate pages.
 
     Returns:
-        List[datetime]: A list of datetime objects representing the dates for which to generate pages.
+        List[datetime]: The dates for the pages.
     """
-    tasks_delta_days = DEFAULT_TASK_DELTA_DAYS
-    logs_delta_days = DEFAULT_LOGS_DELTA_DAYS
+    day_delta_offset = DEFAULT_TASK_DELTA_DAYS
+    week_delta_offset = DEFAULT_LOGS_DELTA_DAYS
 
-    user_tasks_delta_days = input(f"Enter the number of days to get tasks from today [{tasks_delta_days}]: ")
-    user_logs_delta_days = input(f"Enter the number of days to get logs from today [{logs_delta_days}]: ")
+    user_day_date_offset = input(f"Enter the number of days to get tasks from today [{day_delta_offset}]: ")
+    user_week_date_offset = input(f"Enter the number of days to get logs from today [{week_delta_offset}]: ")
+    user_print_week = input("Do you want to print the weekly page? [y/n]: ").lower() == "y"
 
-    if user_tasks_delta_days:
-        tasks_delta_days = int(user_tasks_delta_days)
+    if user_day_date_offset:
+        day_delta_offset = int(user_day_date_offset)
 
-    if user_logs_delta_days:
-        logs_delta_days = int(user_logs_delta_days)
+    if user_week_date_offset:
+        week_delta_offset = int(user_week_date_offset)
 
-    tasks_date: datetime = CURRENT_DATE + timedelta(days=tasks_delta_days)
-    logs_date: datetime = CURRENT_DATE + timedelta(days=logs_delta_days)
+    day_date: datetime = CURRENT_DATE + timedelta(days=day_delta_offset)
 
-    return tasks_date, logs_date
+    week_start_date: datetime | None = None
+    if user_print_week:
+        week_date = CURRENT_DATE + timedelta(weeks=week_delta_offset)
+        week_start_date: datetime = week_date - timedelta(days=week_date.weekday())
+
+    return day_date, week_start_date
