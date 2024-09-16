@@ -55,7 +55,7 @@ class PageProcessor:
 
         tasks_page_with_date = add_week_date_to_img(raw_tasks_page, week_start_date)
 
-        task_data = self.data_processor.get_active_task_data(date="", max_title_length=45)
+        task_data = self.data_processor.get_active_task_data(date="", max_title_length=45, discard_tasks_with_parents=True)
         add_week_tasks_to_img(tasks_page_with_date, task_data)
 
         return tasks_page_base

@@ -80,12 +80,13 @@ class DataProcessor:
 
         return tag_color
 
-    def get_active_task_data(self, date: str, max_title_length: int) -> list[ActiveTaskModel]:
+    def get_active_task_data(self, date: str, max_title_length: int, discard_tasks_with_parents: bool = False) -> list[ActiveTaskModel]:
         """Get active tasks for a given date. If no date is provided, all active tasks will be returned.
 
         Args:
             date: Date for which to get tasks in the format YYYY-MMM-DD.
             max_title_length: Maximum length for task titles.
+            discard_tasks_with_parents: Whether to discard tasks with parents.
 
         Returns:
             List of processed tasks titles for given date ordered chronologically with the following format:
@@ -97,6 +98,9 @@ class DataProcessor:
 
         if date:
             day_tasks = [task for task in day_tasks if task.due_date.startswith(date)]
+
+        if discard_tasks_with_parents:
+            day_tasks = [task for task in day_tasks if not task.parent_id]
 
         sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
 
