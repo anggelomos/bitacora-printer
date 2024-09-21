@@ -25,8 +25,13 @@ def get_pages_dates() -> tuple[datetime, datetime | None]:
     day_date: datetime = CURRENT_DATE + timedelta(days=day_delta_offset)
 
     week_start_date: datetime | None = None
+    is_weekend = CURRENT_DATE.weekday() >= 5
     if user_print_week:
+        # Get the date of the saturday of the las week
+        if not is_weekend:
+            week_delta_offset -= 1
+
         week_date = CURRENT_DATE + timedelta(weeks=week_delta_offset)
-        week_start_date: datetime = week_date - timedelta(days=week_date.weekday())
+        week_start_date = week_date - timedelta(days=week_date.weekday()) + timedelta(days=5)
 
     return day_date, week_start_date

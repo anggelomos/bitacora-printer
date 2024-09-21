@@ -34,7 +34,7 @@ class PageProcessor:
 
         tasks_page_with_date = add_day_date_to_img(raw_tasks_page, page_date)
 
-        task_data = self.data_processor.get_active_task_data(page_date.strftime("%Y-%m-%d"), 50)
+        task_data = self.data_processor.get_active_task_data(page_date.strftime("%Y-%m-%d"), 49)
         add_day_tasks_to_img(tasks_page_with_date, task_data)
 
         return tasks_page_base

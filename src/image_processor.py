@@ -55,7 +55,7 @@ def add_week_date_to_img(base_image: ImageDrawType, start_date: datetime) -> Ima
         Base image with date added.
     """
     logging.info(f"Adding week date {start_date} to image")
-    week_number = start_date.isocalendar()[1]
+    week_number = (start_date + timedelta(weeks=1)).isocalendar()[1]
     formatted_start_date = start_date.strftime(date_format)
     formatted_end_date = (start_date + timedelta(days=6)).strftime(date_format)
     base_color = "black"
