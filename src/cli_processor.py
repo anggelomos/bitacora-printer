@@ -13,20 +13,19 @@ def get_pages_dates() -> tuple[datetime, datetime | None]:
     week_delta_offset = DEFAULT_LOGS_DELTA_DAYS
 
     user_day_date_offset = input(f"Enter the number of days to get tasks from today [{day_delta_offset}]: ")
-    user_week_date_offset = input(f"Enter the number of days to get logs from today [{week_delta_offset}]: ")
     user_print_week = input("Do you want to print the weekly page? [y/n]: ").lower() == "y"
 
     if user_day_date_offset:
         day_delta_offset = int(user_day_date_offset)
-
-    if user_week_date_offset:
-        week_delta_offset = int(user_week_date_offset)
 
     day_date: datetime = CURRENT_DATE + timedelta(days=day_delta_offset)
 
     week_start_date: datetime | None = None
     is_weekend = CURRENT_DATE.weekday() >= 5
     if user_print_week:
+        user_week_date_offset = input(f"Enter the number of days to get logs from today [{week_delta_offset}]: ")
+        week_delta_offset = int(user_week_date_offset)
+
         # Get the date of the saturday of the las week
         if not is_weekend:
             week_delta_offset -= 1
