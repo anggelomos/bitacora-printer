@@ -23,8 +23,10 @@ def get_pages_dates() -> tuple[datetime, datetime | None]:
     week_start_date: datetime | None = None
     is_weekend = CURRENT_DATE.weekday() >= 5
     if user_print_week:
-        user_week_date_offset = input(f"Enter the number of days to get logs from today [{week_delta_offset}]: ")
-        week_delta_offset = int(user_week_date_offset)
+        user_week_date_offset = input(f"Enter the number of weeks to get tasks from today [{week_delta_offset}]: ")
+
+        if week_delta_offset:
+            week_delta_offset = int(user_week_date_offset)
 
         # Get the date of the saturday of the las week
         if not is_weekend:
