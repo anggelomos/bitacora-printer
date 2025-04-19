@@ -17,6 +17,8 @@ from src.data.active_task_model import ActiveTaskModel
 
 class DataProcessor:
     def __init__(self):
+        username = os.getenv("TT_USER")
+        password = os.getenv("TT_PASS")
         self.ticktick_client = TicktickClient(os.getenv("TT_USER"), os.getenv("TT_PASS"))
         self.notion_client = NotionClient(os.getenv("NT_AUTH"))
         self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -104,11 +106,11 @@ class DataProcessor:
 
         sorted_tasks = sorted(day_tasks, key=lambda task: task.due_date)
 
-        processed_task_titles = [ActiveTaskModel(self._process_task_title(task, max_title_length),
-                                                 datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower()
-                                                 if task.due_date else "",
-                                                 self._get_tag_color(task),
-                                                 task.column_id)
+        processed_task_titles = [ActiveTaskModel(title=self._process_task_title(task, max_title_length),
+                                                 date=datetime.fromisoformat(task.due_date).strftime("%I:%M%p").lower() if task.due_date else "",
+                                                 color=self._get_tag_color(task),
+                                                 tags=task.tags,
+                                                 column=task.column_id)
                                  for task in sorted_tasks]
 
         return processed_task_titles

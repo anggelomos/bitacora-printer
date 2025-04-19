@@ -147,12 +147,12 @@ class PageProcessor:
         logging.info(f"Generating front page for {old_date}")
 
         try:
-            old_task_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}-old-task-page.png")
+            old_task_page = Image.open(f"{OLD_PAGES_FOLDER}/{old_date.strftime('%d-%b-%Y').lower()}-old-task-page.png")
             old_task_page.paste(stats_page, (0, 0), mask=ImageOps.invert(stats_page.copy().convert('L')))
 
-            old_journal_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}"
+            old_journal_page = Image.open(f"{OLD_PAGES_FOLDER}/{old_date.strftime('%d-%b-%Y').lower()}"
                                           f"-old-journal-page.png")
-            old_recap_page = Image.open(f"{OLD_PAGES_FOLDER}{old_date.strftime('%d-%b-%Y').lower()}-old-recap-page.png")
+            old_recap_page = Image.open(f"{OLD_PAGES_FOLDER}/{old_date.strftime('%d-%b-%Y').lower()}-old-recap-page.png")
 
             return [old_task_page, old_journal_page, old_recap_page]
         except FileNotFoundError:

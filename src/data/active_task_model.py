@@ -9,6 +9,7 @@ class ActiveTaskModel:
     title: str
     date: str
     color: str
+    tags: tuple[str, ...]
     column: str
 
 

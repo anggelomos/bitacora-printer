@@ -82,8 +82,18 @@ def _group_tasks_by_column(tasks: list[ActiveTaskModel]) -> dict[str, list[Activ
     Returns:
         Dictionary with tasks grouped by column.
     """
-    return {column: [task for task in tasks if task.column == column]
-            for column in ActiveTaskColumns.get_column_ids()}
+    BYPASS_TAGS = {"task-routine", "event"}
+    active_colum_ids = ActiveTaskColumns.get_column_ids()
+    grouped_tasks = {column: [] for column in active_colum_ids}	
+    for task in tasks:
+        if task.column in active_colum_ids:
+            grouped_tasks[task.column].append(task)
+
+
+        if task.tags and bool(set(task.tags) & BYPASS_TAGS):
+            grouped_tasks[ActiveTaskColumns.DAY_PERSONAL_GREAT.value].append(task)
+            
+    return grouped_tasks
 
 
 def _add_day_tasks_group_to_img(base_image: ImageDrawType, tasks: list[ActiveTaskModel], current_height: int,
